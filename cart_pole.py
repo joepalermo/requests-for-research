@@ -20,7 +20,7 @@ def run_episode(env, policy, render=False):
         cumulative_reward += reward
     return cumulative_reward
 
-def random_guessing(env, n=10000):
+def random_guessing(env, n=100):
     random_parameters = np.random.normal(size=(n,4))
     best_config = BestConfig(None, -float("inf"))
     for config in random_parameters:
@@ -31,25 +31,35 @@ def random_guessing(env, n=10000):
     best_policy = lambda x : 1 if np.dot(best_config.config, x) > 0 else 0
     run_episode(env, best_policy, render=True)
 
-
-def hill_climbing(env):
-    pass
+def hill_climbing(env, n=100):
+    config = np.random.normal(scale=0.25, size=4)
+    policy = lambda x : 1 if np.dot(config, x) > 0 else 0
+    episode_return = run_episode(env, policy)
+    for episode_i in range(n):
+        noise = np.random.normal(scale=0.25, size=4)
+        updated_config = config + noise
+        updated_policy = lambda x : 1 if np.dot(updated_config, x) > 0 else 0
+        updated_episode_return = run_episode(env, updated_policy)
+        if updated_episode_return > episode_return:
+            config = updated_config
+            episode_return = updated_episode_return
+    run_episode(env, policy, render=True)
 
 def policy_gradient(env):
     pass
 
 def main(algorithm_type):
     env = gym.make('CartPole-v0')
-    if algorithm_type == 'random_guessing':
+    if algorithm_type == 'guess':
         random_guessing(env)
-    elif algorithm_type == 'hill_climbing':
+    elif algorithm_type == 'climb':
         hill_climbing(env)
-    elif algorithm_type == 'policy_gradient':
+    elif algorithm_type == 'gradient':
         policy_gradient(env)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--algorithm_type', type=str, default='random_guessing',
+    parser.add_argument('--algorithm_type', type=str, default='guess',
                       help='identifies algorithm to run on CartPole-v0')
     args = parser.parse_args()
     main(args.algorithm_type)
